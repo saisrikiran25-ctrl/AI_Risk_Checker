@@ -37,15 +37,17 @@ For every flag, the app explains **what was flagged**, **why it matters**, **how
 
 No build step required. Pure HTML + CSS + JavaScript.
 
-### Option 1: Open directly
-```
-index.html → Open in any modern browser
-```
+### Option 1: Visit the Live Site (GitHub Pages)
+Visit: [AI Content Risk Checker Live](https://saisrikiran25-ctrl.github.io/AI_Risk_Checker/)
 
-### Option 2: Run a local server (recommended)
+### Option 2: Open index.html directly
+Simply double-click the [index.html](file:///c:/Users/Sai%20Kiran/Downloads/New%20folder%20(4)/index.html) file to open the application in any web browser.
+
+### Option 3: Run a local development server
+Run a local Python server:
 ```bash
-python -m http.server 8080
-# Then visit: http://localhost:8080
+python -m http.server 7823
+# Then visit: http://localhost:7823
 ```
 
 Or with Node:
@@ -92,20 +94,9 @@ Plus automatic escalation for: privacy data exposure, unverified testimonials, f
 
 ---
 
-## 📦 Pre-loaded Sample Reviews
+## 📦 Sample Draft Templates
 
-10 realistic demo reviews across all content types:
-
-- Blog post with unsupported stats (Score: 74 — High)
-- Landing page with guarantee language (Score: 91 — Critical)
-- D&I newsletter with bias risk (Score: 62 — High)
-- Case study with customer data exposure (Score: 79 — High)
-- Social post with vague authority claims (Score: 56 — Medium)
-- Paid ad with FTC-risk guarantees (Score: 83 — Critical)
-- Founder LinkedIn post (Score: 67 — High)
-- Onboarding email with privacy flags (Score: 38 — Medium)
-- Product page with comparative claims (Score: 58 — Medium)
-- Help doc with absolute security claims (Score: 45 — Medium)
+The application starts with a clean slate for your organization's reviews. To test the live AI risk checker immediately, go to the **New Review** view and click the **"Load Sample"** button in the upper right corner. It will populate the editor with draft text containing various risk markers (such as absolute guarantees, personal emails, age-coded hiring descriptions, and unsourced statistics) for the AI scan engine to detect.
 
 ---
 
