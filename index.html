@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Content Risk Checker — Governance-First Content Review</title>
+  <meta name="description" content="Pre-publish governance tool for content and marketing teams. Scan AI-assisted drafts for claims risk, privacy risk, bias, testimonial issues, and citation gaps before publication." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">RiskChecker</span>
+          <span class="brand-tagline">Content Governance</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="new-review" onclick="switchView('new-review')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          <span>New Review</span>
+        </button>
+        <button class="nav-item" data-view="audit-log" onclick="switchView('audit-log')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <span>Audit Log</span>
+        </button>
+        <button class="nav-item" data-view="governance" onclick="switchView('governance')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+          </svg>
+          <span>Governance Rules</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="role-badge">
+          <span class="role-dot"></span>
+          <span>Admin / Gov. Owner</span>
+        </div>
+        <p class="disclaimer-small">This tool supports human oversight. Final decisions belong to your reviewers.</p>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="main-content">
+
+      <!-- ===== DASHBOARD VIEW ===== -->
+      <div id="view-dashboard" class="view active">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Content Risk Dashboard</h1>
+            <p class="view-subtitle">Review history, active flags, and governance status across your content pipeline.</p>
+          </div>
+          <button class="btn-primary" onclick="switchView('new-review')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            Run New Review
+          </button>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Reviews</div>
+            <div class="stat-value" id="stat-total">10</div>
+            <div class="stat-sub">Last 30 days</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">High / Critical Risk</div>
+            <div class="stat-value risk-high" id="stat-high">4</div>
+            <div class="stat-sub">Require escalation</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Human Review</div>
+            <div class="stat-value risk-medium" id="stat-pending">5</div>
+            <div class="stat-sub">Awaiting approvers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Top Risk Category</div>
+            <div class="stat-value-sm" id="stat-top-risk">Claims Risk</div>
+            <div class="stat-sub">Most flagged type</div>
+          </div>
+        </div>
+
+        <!-- Recent Reviews Table -->
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title">Recent Reviews</h2>
+            <button class="btn-ghost" onclick="switchView('audit-log')">View All →</button>
+          </div>
+          <div id="recent-reviews-list"></div>
+        </div>
+
+        <!-- Governance Notice -->
+        <div class="governance-notice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="currentColor"/>
+          </svg>
+          <span><strong>Governance reminder:</strong> This tool flags likely issues for human review. It does not guarantee compliance, replace legal judgment, or certify content as publication-ready. All final decisions belong to your named reviewers.</span>
+        </div>
+      </div>
+
+      <!-- ===== NEW REVIEW VIEW ===== -->
+      <div id="view-new-review" class="view">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">New Content Review</h1>
+            <p class="view-subtitle">Paste or import your draft. Set the content context, then run the governance scan.</p>
+          </div>
+          <button class="btn-ghost" onclick="loadSampleContent()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Load Sample
+          </button>
+        </div>
+
+        <div class="review-layout">
+          <!-- Left Panel: Input -->
+          <div class="review-left">
+            <div class="section-card">
+              <div class="section-header">
+                <h2 class="section-title">Draft Content</h2>
+                <div class="char-count" id="char-count">0 characters</div>
+              </div>
+              <textarea
+                id="content-input"
+                class="content-textarea"
+                placeholder="Paste your draft content here — blog post, landing page copy, email, social post, ad copy, case study, or any AI-assisted draft...&#10;&#10;The governance scan will check for claims risk, privacy issues, bias, authenticity concerns, and citation gaps."
+                oninput="updateCharCount()"
+              ></textarea>
+            </div>
+
+            <!-- Context Settings -->
+            <div class="section-card">
+              <h2 class="section-title">Review Context</h2>
+              <p class="section-desc">Risk scoring adjusts based on content type, channel, and workflow stage.</p>
+              <div class="context-grid">
+                <div class="form-group">
+                  <label class="form-label" for="content-type">Content Type</label>
+                  <select id="content-type" class="form-select">
+                    <option value="blog">Blog Post</option>
+                    <option value="landing">Landing Page</option>
+                    <option value="product">Product Page</option>
+                    <option value="email">Email / Newsletter</option>
+                    <option value="paid-ad">Paid Ad</option>
+                    <option value="social">Social Post</option>
+                    <option value="case-study">Case Study</option>
+                    <option value="help-doc">Help Doc / Knowledge Base</option>
+                    <option value="sales">Sales Collateral</option>
+                    <option value="founder">Founder Post / Executive Content</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="channel">Channel</label>
+                  <select id="channel" class="form-select">
+                    <option value="website">Website</option>
+                    <option value="email">Email</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="social">X / Social</option>
+                    <option value="paid-search">Paid Search</option>
+                    <option value="paid-social">Paid Social</option>
+                    <option value="sales">Sales Enablement</option>
+                    <option value="help">Help Center</option>
+                    <option value="internal">Internal Draft</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="workflow-stage">Workflow Stage</label>
+                  <select id="workflow-stage" class="form-select">
+                    <option value="early-draft">Early Draft</option>
+                    <option value="internal-review">Internal Review</option>
+                    <option value="pre-publish">Pre-Publish</option>
+                    <option value="final-approval">Final Approval</option>
+                    <option value="post-pub">Post-Publication Review</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Context Tags</label>
+                  <div class="tag-grid" id="context-tags">
+                    <label class="tag-option"><input type="checkbox" value="ai-assisted"> AI-Assisted Draft</label>
+                    <label class="tag-option"><input type="checkbox" value="customer-facing"> Customer-Facing</label>
+                    <label class="tag-option"><input type="checkbox" value="regulated"> Regulated Topic</label>
+                    <label class="tag-option"><input type="checkbox" value="includes-stats"> Includes Stats</label>
+                    <label class="tag-option"><input type="checkbox" value="customer-quote"> Customer Quote</label>
+                    <label class="tag-option"><input type="checkbox" value="founder-voice"> Founder Voice</label>
+                    <label class="tag-option"><input type="checkbox" value="comparative"> Comparative Claim</label>
+                    <label class="tag-option"><input type="checkbox" value="sensitive-audience"> Sensitive Audience</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-scan" id="scan-btn" onclick="runScan()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Run Governance Scan
+            </button>
+          </div>
+
+          <!-- Right Panel: Quick reference -->
+          <div class="review-right">
+            <div class="section-card info-panel">
+              <h3 class="info-title">What this scan checks</h3>
+              <div class="risk-category-list">
+                <div class="risk-cat-item">
+                  <div class="risk-cat-icon claims">C</div>
+                  <div>
+                    <div class="risk-cat-name">Claims Risk</div>
+                    <div class="risk-cat-desc">Unsupported stats, performance promises, certainty language, superlatives</div>
+                  </div>
+                </div>
+                <div class="risk-cat-item">
+                  <div class="risk-cat-icon privacy">P</div>
+                  <div>
+                    <div class="risk-cat-name">Privacy Risk</div>
+                    <div class="risk-cat-desc">Personal data, customer identifiers, confidential internal info</div>
+                  </div>
+                </div>
+                <div class="risk-cat-item">
+                  <div class="risk-cat-icon bias">B</div>
+                  <div>
+                    <div class="risk-cat-name">Bias Risk</div>
+                    <div class="risk-cat-desc">Exclusionary wording, stereotyped assumptions, demographic generalizations</div>
+                  </div>
+                </div>
+                <div class="risk-cat-item">
+                  <div class="risk-cat-icon testimonial">T</div>
+                  <div>
+                    <div class="risk-cat-name">Testimonial / Authenticity Risk</div>
+                    <div class="risk-cat-desc">Quote-like statements, implied endorsements, fabricated customer voices</div>
+                  </div>
+                </div>
+                <div class="risk-cat-item">
+                  <div class="risk-cat-icon citation">S</div>
+                  <div>
+                    <div class="risk-cat-name">Citation / Source Risk</div>
+                    <div class="risk-cat-desc">Stats without sources, "studies show" language, vague authority claims</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="section-card info-panel">
+              <h3 class="info-title">How scoring works</h3>
+              <div class="score-legend">
+                <div class="score-legend-item"><span class="risk-badge low">Low</span><span>0–30 — Minor issues, writer-level fix</span></div>
+                <div class="score-legend-item"><span class="risk-badge medium">Medium</span><span>31–59 — Editor / content lead review</span></div>
+                <div class="score-legend-item"><span class="risk-badge high">High</span><span>60–79 — PMM + legal involvement</span></div>
+                <div class="score-legend-item"><span class="risk-badge critical">Critical</span><span>80+ — Stop. Escalate before publish.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RESULTS VIEW ===== -->
+      <div id="view-results" class="view">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Risk Review Results</h1>
+            <p class="view-subtitle" id="results-subtitle">Review completed · Human approval required before publish</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-ghost" onclick="switchView('new-review')">← New Review</button>
+            <button class="btn-secondary" onclick="exportResults()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Export Summary
+            </button>
+          </div>
+        </div>
+
+        <div class="results-layout">
+          <!-- Left: Score + Category Breakdown -->
+          <div class="results-left">
+            <!-- Overall Score -->
+            <div class="section-card score-card" id="score-card">
+              <div class="score-header">
+                <div class="score-display">
+                  <div class="score-ring-container">
+                    <svg class="score-ring" viewBox="0 0 120 120" width="120" height="120">
+                      <circle class="ring-track" cx="60" cy="60" r="50" fill="none" stroke-width="10"/>
+                      <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="50" fill="none" stroke-width="10"
+                        stroke-dasharray="314" stroke-dashoffset="314" stroke-linecap="round"
+                        transform="rotate(-90 60 60)"/>
+                    </svg>
+                    <div class="score-center">
+                      <div class="score-number" id="overall-score-display">--</div>
+                      <div class="score-label-sm">/ 100</div>
+                    </div>
+                  </div>
+                  <div class="score-info">
+                    <div class="risk-badge-lg" id="risk-label-badge">—</div>
+                    <div class="score-desc" id="score-description">Running scan...</div>
+                    <div class="review-id-display" id="review-id-display"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Scores -->
+            <div class="section-card">
+              <h2 class="section-title">Risk Categories</h2>
+              <div id="category-scores"></div>
+            </div>
+
+            <!-- Required Reviewers -->
+            <div class="section-card">
+              <h2 class="section-title">Required Review Path</h2>
+              <div id="reviewer-routing"></div>
+            </div>
+          </div>
+
+          <!-- Right: Flags + Actions -->
+          <div class="results-right">
+            <!-- Flagged Passages -->
+            <div class="section-card">
+              <div class="section-header">
+                <h2 class="section-title">Flagged Passages</h2>
+                <div id="flag-count-badge" class="flag-count"></div>
+              </div>
+              <div id="flagged-passages"></div>
+            </div>
+
+            <!-- Recommended Actions -->
+            <div class="section-card">
+              <h2 class="section-title">Recommended Actions</h2>
+              <div id="recommended-actions"></div>
+            </div>
+
+            <!-- Status Control -->
+            <div class="section-card">
+              <h2 class="section-title">Review Status</h2>
+              <div class="status-control">
+                <select id="review-status" class="form-select" onchange="updateReviewStatus()">
+                  <option value="scanned">Scanned — Awaiting Review</option>
+                  <option value="needs-edits">Needs Edits</option>
+                  <option value="needs-human">Needs Human Review</option>
+                  <option value="escalated">Escalated</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="published-exception">Published with Exception</option>
+                </select>
+                <textarea id="review-notes" class="notes-textarea" placeholder="Add reviewer notes, decisions, or rationale..."></textarea>
+                <button class="btn-primary" onclick="saveReviewDecision()">Save Decision</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== AUDIT LOG VIEW ===== -->
+      <div id="view-audit-log" class="view">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Audit Log</h1>
+            <p class="view-subtitle">Complete record of all content reviews. Filter, search, and export for compliance handoffs.</p>
+          </div>
+          <button class="btn-secondary" onclick="exportAuditLog()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export Log
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <input type="text" class="filter-search" id="audit-search" placeholder="Search by content type, title, or review ID..." oninput="filterAuditLog()" />
+          <select class="filter-select" id="filter-risk" onchange="filterAuditLog()">
+            <option value="">All Risk Levels</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+          <select class="filter-select" id="filter-status" onchange="filterAuditLog()">
+            <option value="">All Statuses</option>
+            <option value="scanned">Scanned</option>
+            <option value="needs-edits">Needs Edits</option>
+            <option value="needs-human">Needs Human Review</option>
+            <option value="escalated">Escalated</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select class="filter-select" id="filter-type" onchange="filterAuditLog()">
+            <option value="">All Content Types</option>
+            <option value="blog">Blog Post</option>
+            <option value="landing">Landing Page</option>
+            <option value="paid-ad">Paid Ad</option>
+            <option value="email">Email</option>
+            <option value="social">Social Post</option>
+            <option value="case-study">Case Study</option>
+            <option value="founder">Founder Post</option>
+          </select>
+        </div>
+
+        <div id="audit-log-list"></div>
+      </div>
+
+      <!-- ===== GOVERNANCE RULES VIEW ===== -->
+      <div id="view-governance" class="view">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Governance Configuration</h1>
+            <p class="view-subtitle">Define policies, reviewer mappings, risk thresholds, and restricted content rules for your organization.</p>
+          </div>
+          <button class="btn-primary" onclick="saveGovernanceSettings()">Save Configuration</button>
+        </div>
+
+        <div class="governance-layout">
+          <!-- Left Column -->
+          <div class="gov-col">
+            <!-- Risk Thresholds -->
+            <div class="section-card">
+              <h2 class="section-title">Risk Thresholds</h2>
+              <p class="section-desc">Adjust score boundaries that determine risk classification and escalation triggers.</p>
+              <div class="threshold-list" id="threshold-settings">
+                <div class="threshold-row">
+                  <span class="threshold-label">Medium risk above:</span>
+                  <input type="number" class="threshold-input" id="thresh-medium" value="30" min="0" max="100" />
+                  <span class="threshold-unit">/ 100</span>
+                </div>
+                <div class="threshold-row">
+                  <span class="threshold-label">High risk above:</span>
+                  <input type="number" class="threshold-input" id="thresh-high" value="60" min="0" max="100" />
+                  <span class="threshold-unit">/ 100</span>
+                </div>
+                <div class="threshold-row">
+                  <span class="threshold-label">Critical risk above:</span>
+                  <input type="number" class="threshold-input" id="thresh-critical" value="80" min="0" max="100" />
+                  <span class="threshold-unit">/ 100</span>
+                </div>
+                <div class="threshold-row">
+                  <span class="threshold-label">Stop-publish at:</span>
+                  <input type="number" class="threshold-input" id="thresh-stop" value="75" min="0" max="100" />
+                  <span class="threshold-unit">/ 100</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reviewer Mappings -->
+            <div class="section-card">
+              <h2 class="section-title">Reviewer Assignments by Content Type</h2>
+              <p class="section-desc">Define which roles must sign off before each content type can publish.</p>
+              <div class="reviewer-table" id="reviewer-mappings">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="gov-col">
+            <!-- Restricted Terms -->
+            <div class="section-card">
+              <h2 class="section-title">Watch Terms / Restricted Language</h2>
+              <p class="section-desc">Add phrases or terms that should always trigger a flag in the scan.</p>
+              <div class="watch-terms-list" id="watch-terms-list"></div>
+              <div class="add-term-row">
+                <input type="text" id="new-watch-term" class="form-input" placeholder="e.g. guaranteed results" />
+                <button class="btn-secondary" onclick="addWatchTerm()">Add Term</button>
+              </div>
+            </div>
+
+            <!-- Review Policies -->
+            <div class="section-card">
+              <h2 class="section-title">Restricted Content Rules</h2>
+              <p class="section-desc">Hard-stop governance rules. Violations prevent approval without escalation.</p>
+              <div class="policy-list" id="policy-list">
+                <label class="policy-item">
+                  <input type="checkbox" checked id="policy-no-ai-testimonials" />
+                  <div>
+                    <div class="policy-name">No AI-generated testimonials</div>
+                    <div class="policy-desc">Require human approval for any quote-style content</div>
+                  </div>
+                </label>
+                <label class="policy-item">
+                  <input type="checkbox" checked id="policy-no-unsourced-stats" />
+                  <div>
+                    <div class="policy-name">No unsourced stats in customer-facing content</div>
+                    <div class="policy-desc">All statistics must have verifiable attribution</div>
+                  </div>
+                </label>
+                <label class="policy-item">
+                  <input type="checkbox" checked id="policy-no-customer-names" />
+                  <div>
+                    <div class="policy-name">No customer names in drafts without approval</div>
+                    <div class="policy-desc">Escalate to Customer Marketing if names are detected</div>
+                  </div>
+                </label>
+                <label class="policy-item">
+                  <input type="checkbox" checked id="policy-no-regulated-claims" />
+                  <div>
+                    <div class="policy-name">No regulated claims without evidence</div>
+                    <div class="policy-desc">Health, financial, or legal claims require Legal/Compliance sign-off</div>
+                  </div>
+                </label>
+                <label class="policy-item">
+                  <input type="checkbox" checked id="policy-founder-approval" />
+                  <div>
+                    <div class="policy-name">Mandatory human approval for founder voice</div>
+                    <div class="policy-desc">Founder / Executive content requires named editorial + founder sign-off</div>
+                  </div>
+                </label>
+                <label class="policy-item">
+                  <input type="checkbox" id="policy-ai-disclosure" />
+                  <div>
+                    <div class="policy-name">Require AI-use disclosure on all published content</div>
+                    <div class="policy-desc">Flag any content marked as AI-assisted without a disclosure note</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== REVIEW DETAIL VIEW ===== -->
+      <div id="view-review-detail" class="view">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Review Detail</h1>
+            <p class="view-subtitle" id="detail-subtitle">Full record for audit and reconstruction</p>
+          </div>
+          <button class="btn-ghost" onclick="switchView('audit-log')">← Back to Audit Log</button>
+        </div>
+        <div id="review-detail-content"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Scanning overlay -->
+  <div class="scan-overlay" id="scan-overlay">
+    <div class="scan-modal">
+      <div class="scan-spinner"></div>
+      <div class="scan-title">Running Governance Scan</div>
+      <div class="scan-steps">
+        <div class="scan-step" id="step-1">
+          <div class="step-dot active"></div>
+          <span>Analyzing claims and performance language...</span>
+        </div>
+        <div class="scan-step" id="step-2">
+          <div class="step-dot"></div>
+          <span>Checking for privacy and identifier exposure...</span>
+        </div>
+        <div class="scan-step" id="step-3">
+          <div class="step-dot"></div>
+          <span>Evaluating bias and exclusionary patterns...</span>
+        </div>
+        <div class="scan-step" id="step-4">
+          <div class="step-dot"></div>
+          <span>Reviewing testimonial and authenticity signals...</span>
+        </div>
+        <div class="scan-step" id="step-5">
+          <div class="step-dot"></div>
+          <span>Verifying citation and source standards...</span>
+        </div>
+        <div class="scan-step" id="step-6">
+          <div class="step-dot"></div>
+          <span>Calculating weighted risk score and routing...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="export-modal" style="display:none">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Export Review Summary</h3>
+        <button class="modal-close" onclick="closeExportModal()">✕</button>
+      </div>
+      <div class="modal-body" id="export-content"></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="copyExportContent()">Copy to Clipboard</button>
+        <button class="btn-primary" onclick="closeExportModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
